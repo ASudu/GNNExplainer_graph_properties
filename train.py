@@ -34,6 +34,7 @@ import utils.parser_utils as parser_utils
 import utils.train_utils as train_utils
 import utils.featgen as featgen
 import utils.graph_utils as graph_utils
+import cross_val
 
 import models
 
@@ -55,7 +56,7 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
     else:
         train_idx = int(len(graphs) * args.train_ratio)
         train_graphs = graphs[:train_idx]
-        val_graphs = graph[train_idx:]
+        val_graphs = graphs[train_idx:]
     print(
         "Num training graphs: ",
         len(train_graphs),
@@ -956,7 +957,7 @@ def benchmark_task_val(args, writer=None, feat="node-label"):
 
     # 10 splits
     for i in range(10):
-        train_dataset, val_dataset, max_num_nodes, input_dim, assign_input_dim = cross_val.prepare_val_data(
+        train_dataset, val_dataset, _, max_num_nodes, input_dim, assign_input_dim = cross_val.prepare_val_data(
             graphs, args, i, max_nodes=args.max_nodes
         )
         print("Method: base")
