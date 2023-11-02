@@ -105,13 +105,13 @@ venv.bak/
 
 # edit
 *.sw?
-# data/
-# log/
-# syn/
-# ckpt/
-# out/
-# results/
-# path/
+data/
+log/
+syn/
+ckpt/
+out/
+results/
+path/
 
 .idea/
 .vscode/
