@@ -734,6 +734,8 @@ def syn_task5(args, writer=None):
 
 
 def pkl_task(args, feat=None):
+    # dir = os.path.abspath(args.datadir)
+    # print(f"Required directory path: {os.path.dirname(dir)}")
     with open(os.path.join(args.datadir, args.pkl_fname), "rb") as pkl_file:
         data = pickle.load(pkl_file)
     graphs = data[0]
