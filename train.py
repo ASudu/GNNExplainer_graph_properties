@@ -755,9 +755,7 @@ def pkl_task(args, feat=None):
         for G in test_graphs:
             featgen_const.gen_node_features(G)
 
-    train_dataset, test_dataset, max_num_nodes = prepare_data(
-        graphs, args, test_graphs=test_graphs
-    )
+    train_dataset, test_dataset, max_num_nodes = prepare_data(graphs, args, test_graphs=test_graphs)
     model = models.GcnEncoderGraph(
         args.input_dim,
         args.hidden_dim,
