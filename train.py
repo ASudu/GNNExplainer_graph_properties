@@ -123,7 +123,7 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
     #     dataset_sampler.feat_dim,
     #     dataset_sampler.assign_feat_dim,
     # )
-    return train_dataset_loader, test_dataset_loader, dataset_sampler.max_num_nodes
+    return train_dataset_loader, val_dataset_loader, test_dataset_loader, dataset_sampler.max_num_nodes
 
 
 #############################
@@ -528,8 +528,8 @@ def evaluate(dataset, model, args, name="Validation", max_num_examples=None):
     preds = np.hstack(preds)
 
     result = {
-        "prec": metrics.precision_score(labels, preds, average="macro"),
-        "recall": metrics.recall_score(labels, preds, average="macro"),
+        "prec": metrics.precision_score(labels, preds, average="macro",zero_division=0.0),
+        "recall": metrics.recall_score(labels, preds, average="macro",zero_division=0.0),
         "acc": metrics.accuracy_score(labels, preds),
     }
     print(name, " accuracy:", result["acc"])
@@ -546,14 +546,14 @@ def evaluate_node(ypred, labels, train_idx, test_idx):
     labels_test = np.ravel(labels[:, test_idx])
 
     result_train = {
-        "prec": metrics.precision_score(labels_train, pred_train, average="macro"),
-        "recall": metrics.recall_score(labels_train, pred_train, average="macro"),
+        "prec": metrics.precision_score(labels_train, pred_train, average="macro",zero_division=0.0),
+        "recall": metrics.recall_score(labels_train, pred_train, average="macro",zero_division=0.0),
         "acc": metrics.accuracy_score(labels_train, pred_train),
         "conf_mat": metrics.confusion_matrix(labels_train, pred_train),
     }
     result_test = {
-        "prec": metrics.precision_score(labels_test, pred_test, average="macro"),
-        "recall": metrics.recall_score(labels_test, pred_test, average="macro"),
+        "prec": metrics.precision_score(labels_test, pred_test, average="macro",zero_division=0.0),
+        "recall": metrics.recall_score(labels_test, pred_test, average="macro",zero_division=0.0),
         "acc": metrics.accuracy_score(labels_test, pred_test),
         "conf_mat": metrics.confusion_matrix(labels_test, pred_test),
     }
@@ -767,7 +767,7 @@ def pkl_task(args, feat=None):
         for G in test_graphs:
             featgen_const.gen_node_features(G)
 
-    train_dataset, test_dataset, max_num_nodes = prepare_data(graphs, args, test_graphs=test_graphs)
+    train_dataset, val_dataset, test_dataset, max_num_nodes = prepare_data(graphs, args, test_graphs=test_graphs)
     model = models.GcnEncoderGraph(
         args.input_dim,
         args.hidden_dim,
@@ -780,7 +780,7 @@ def pkl_task(args, feat=None):
 
     if args.gpu:
         model = model.cuda()
-    train(train_dataset, model, args, test_dataset=test_dataset)
+    train(train_dataset, model, args, test_dataset=test_dataset, val_dataset=val_dataset)
     evaluate(test_dataset, model, args, "Validation")
 
 

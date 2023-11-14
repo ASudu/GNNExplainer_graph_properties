@@ -41,6 +41,8 @@ def gen_prefix(args):
     '''
     if args.bmname is not None:
         name = args.bmname
+    elif args.pkl_fname is not None:
+        name = args.pkl_fname[:-4]
     else:
         name = args.dataset
     name += "_" + args.method
