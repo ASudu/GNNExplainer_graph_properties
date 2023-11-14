@@ -115,14 +115,15 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
         num_workers=args.num_workers,
     )
 
-    return (
-        train_dataset_loader,
-        val_dataset_loader,
-        test_dataset_loader,
-        dataset_sampler.max_num_nodes,
-        dataset_sampler.feat_dim,
-        dataset_sampler.assign_feat_dim,
-    )
+    # return (
+    #     train_dataset_loader,
+    #     val_dataset_loader,
+    #     test_dataset_loader,
+    #     dataset_sampler.max_num_nodes,
+    #     dataset_sampler.feat_dim,
+    #     dataset_sampler.assign_feat_dim,
+    # )
+    return train_dataset_loader, test_dataset_loader, dataset_sampler.max_num_nodes
 
 
 #############################
@@ -178,13 +179,20 @@ def train(
                 all_adjs = torch.cat((all_adjs, prev_adjs), dim=0)
                 all_feats = torch.cat((all_feats, prev_feats), dim=0)
                 all_labels = torch.cat((all_labels, prev_labels), dim=0)
-            adj = Variable(data["adj"].float(), requires_grad=False).cuda()
-            h0 = Variable(data["feats"].float(), requires_grad=False).cuda()
-            label = Variable(data["label"].long()).cuda()
+            
+            if args.gpu==True:
+                adj = Variable(data["adj"].float(), requires_grad=False).cuda()
+                h0 = Variable(data["feats"].float(), requires_grad=False).cuda()
+                label = Variable(data["label"].long()).cuda()
+                assign_input = Variable(data["assign_feats"].float(), requires_grad=False).cuda()
+            
+            elif args.gpu==False:
+                adj = Variable(data["adj"].float(), requires_grad=False)
+                h0 = Variable(data["feats"].float(), requires_grad=False)
+                label = Variable(data["label"].long())
+                assign_input = Variable(data["assign_feats"].float(), requires_grad=False)
+            
             batch_num_nodes = data["num_nodes"].int().numpy() if mask_nodes else None
-            assign_input = Variable(
-                data["assign_feats"].float(), requires_grad=False
-            ).cuda()
 
             ypred, att_adj = model(h0, adj, batch_num_nodes, assign_x=assign_input)
             if batch_idx < 5:
@@ -497,13 +505,16 @@ def evaluate(dataset, model, args, name="Validation", max_num_examples=None):
     labels = []
     preds = []
     for batch_idx, data in enumerate(dataset):
-        adj = Variable(data["adj"].float(), requires_grad=False).cuda()
-        h0 = Variable(data["feats"].float()).cuda()
+        if args.gpu==True:
+            adj = Variable(data["adj"].float(), requires_grad=False).cuda()
+            h0 = Variable(data["feats"].float()).cuda()
+            assign_input = Variable(data["assign_feats"].float(), requires_grad=False).cuda()
+        elif args.gpu==False:
+            adj = Variable(data["adj"].float(), requires_grad=False)
+            h0 = Variable(data["feats"].float())
+            assign_input = Variable(data["assign_feats"].float(), requires_grad=False)
         labels.append(data["label"].long().numpy())
         batch_num_nodes = data["num_nodes"].int().numpy()
-        assign_input = Variable(
-            data["assign_feats"].float(), requires_grad=False
-        ).cuda()
 
         ypred, att_adj = model(h0, adj, batch_num_nodes, assign_x=assign_input)
         _, indices = torch.max(ypred, 1)
@@ -739,9 +750,10 @@ def pkl_task(args, feat=None):
     with open(os.path.join(args.datadir, args.pkl_fname), "rb") as pkl_file:
         data = pickle.load(pkl_file)
     graphs = data[0]
-    labels = data[1]
+    labels = [np.argmax(m) for m in list(data[1])]
+    labels = np.array(labels)
     test_graphs = data[2]
-    test_labels = data[3]
+    test_labels = [np.argmax(m) for m in list(data[3])]
 
     for i in range(len(graphs)):
         graphs[i].graph["label"] = labels[i]
@@ -763,7 +775,11 @@ def pkl_task(args, feat=None):
         args.num_classes,
         args.num_gc_layers,
         bn=args.bn,
-    ).cuda()
+        args=args
+    )
+
+    if args.gpu:
+        model = model.cuda()
     train(train_dataset, model, args, test_dataset=test_dataset)
     evaluate(test_dataset, model, args, "Validation")
 
