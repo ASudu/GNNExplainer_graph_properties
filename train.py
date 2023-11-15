@@ -243,19 +243,19 @@ def train(
             test_epochs.append(test_result["epoch"])
             test_accs.append(test_result["acc"])
 
-    matplotlib.style.use("seaborn")
-    plt.switch_backend("agg")
-    plt.figure()
-    plt.plot(train_epochs, math_utils.exp_moving_avg(train_accs, 0.85), "-", lw=1)
-    if test_dataset is not None:
-        plt.plot(best_val_epochs, best_val_accs, "bo", test_epochs, test_accs, "go")
-        plt.legend(["train", "val", "test"])
-    else:
-        plt.plot(best_val_epochs, best_val_accs, "bo")
-        plt.legend(["train", "val"])
-    plt.savefig(io_utils.gen_train_plt_name(args), dpi=600)
-    plt.close()
-    matplotlib.style.use("default")
+    # matplotlib.style.use("seaborn")
+    # plt.switch_backend("agg")
+    # plt.figure()
+    # plt.plot(train_epochs, math_utils.exp_moving_avg(train_accs, 0.85), "-", lw=1)
+    # if test_dataset is not None:
+    #     plt.plot(best_val_epochs, best_val_accs, "bo", test_epochs, test_accs, "go")
+    #     plt.legend(["train", "val", "test"])
+    # else:
+    #     plt.plot(best_val_epochs, best_val_accs, "bo")
+    #     plt.legend(["train", "val"])
+    # plt.savefig(io_utils.gen_train_plt_name(args), dpi=600)
+    # plt.close()
+    # matplotlib.style.use("default")
 
     print(all_adjs.shape, all_feats.shape, all_labels.shape)
 

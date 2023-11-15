@@ -277,8 +277,12 @@ def main():
             explainer.explain_graphs(graph_indices=graph_indices)
 
         elif prog_args.graph_idx == -1:
-            # just run for a customized set of indices
-            explainer.explain_graphs(graph_indices=[1, 2, 3, 4])
+            # just run for gr_ind which is a customized set of indices
+            # gr_ind = [1,2,3,4]
+            gr_ind = [2*i for i in range(400,700,4)]
+            gr_ind.extend([x+1 for x in gr_ind])
+            gr_ind.sort()
+            explainer.explain_graphs(graph_indices=gr_ind)
         else:
             explainer.explain(
                 node_idx=0,

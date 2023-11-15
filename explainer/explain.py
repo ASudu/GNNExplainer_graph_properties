@@ -360,6 +360,7 @@ class Explainer:
         masked_adjs = []
 
         for graph_idx in graph_indices:
+            
             masked_adj = self.explain(node_idx=0, graph_idx=graph_idx, graph_mode=True)
             G_denoised = io_utils.denoise_graph(
                 masked_adj,
