@@ -8,6 +8,7 @@ import pickle
 import random
 import shutil
 import time
+import copy
 
 import matplotlib
 import matplotlib.colors as colors
@@ -46,7 +47,10 @@ import models
 #############################
 def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
 
+    # graphs_cpy = copy.deepcopy(graphs)
     random.shuffle(graphs)
+
+    # shuffled_indices = [list(graphs_cpy).index(p) for p in list(graphs)]
     if test_graphs is None:
         train_idx = int(len(graphs) * args.train_ratio)
         test_idx = int(len(graphs) * (1 - args.test_ratio))
@@ -57,6 +61,13 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
         train_idx = int(len(graphs) * args.train_ratio)
         train_graphs = graphs[:train_idx]
         val_graphs = graphs[train_idx:]
+
+    # # Get the shuffled indices to create the pairs later
+    # shuffled_indices_train = shuffled_indices[:len(train_graphs)]
+    # shuffled_indices_val = shuffled_indices[:len(train_graphs):]
+    # shuffled_indices_test = list(range(len(test_graphs)))
+    # indices = [shuffled_indices_train, shuffled_indices_val, shuffled_indices_test]
+
     print(
         "Num training graphs: ",
         len(train_graphs),

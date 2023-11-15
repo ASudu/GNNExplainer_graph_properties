@@ -85,15 +85,15 @@ class Explainer:
             neighbors = np.asarray(range(self.adj.shape[0]))
         else:
             print("node label: ", self.label[graph_idx][node_idx])
-            node_idx_new, sub_adj, sub_feat, sub_label, neighbors = self.extract_neighborhood(
-                node_idx, graph_idx
-            )
+            node_idx_new, sub_adj, sub_feat, sub_label, neighbors = self.extract_neighborhood(node_idx, graph_idx)
             print("neigh graph idx: ", node_idx, node_idx_new)
             sub_label = np.expand_dims(sub_label, axis=0)
 
+        # Equivalent to np.reshape
         sub_adj = np.expand_dims(sub_adj, axis=0)
         sub_feat = np.expand_dims(sub_feat, axis=0)
 
+        # Getting tensors
         adj   = torch.tensor(sub_adj, dtype=torch.float)
         x     = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
         label = torch.tensor(sub_label, dtype=torch.long)
@@ -125,9 +125,7 @@ class Explainer:
         if model == "grad":
             explainer.zero_grad()
             # pdb.set_trace()
-            adj_grad = torch.abs(
-                explainer.adj_feat_grad(node_idx_new, pred_label[node_idx_new])[0]
-            )[graph_idx]
+            adj_grad = torch.abs(explainer.adj_feat_grad(node_idx_new, pred_label[node_idx_new])[0])[graph_idx]
             masked_adj = adj_grad + adj_grad.t()
             masked_adj = nn.functional.sigmoid(masked_adj)
             masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze()
@@ -161,11 +159,7 @@ class Explainer:
 
                 if self.writer is not None:
                     self.writer.add_scalar("mask/density", mask_density, epoch)
-                    self.writer.add_scalar(
-                        "optimization/lr",
-                        explainer.optimizer.param_groups[0]["lr"],
-                        epoch,
-                    )
+                    self.writer.add_scalar("optimization/lr", explainer.optimizer.param_groups[0]["lr"], epoch)
                     if epoch % 25 == 0:
                         explainer.log_mask(epoch)
                         explainer.log_masked_adj(
@@ -360,7 +354,9 @@ class Explainer:
         masked_adjs = []
 
         for graph_idx in graph_indices:
-            
+            print("===============================")
+            print(f"Explaining graph #{graph_idx}")
+            print("===============================")
             masked_adj = self.explain(node_idx=0, graph_idx=graph_idx, graph_mode=True)
             G_denoised = io_utils.denoise_graph(
                 masked_adj,

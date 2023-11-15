@@ -13,6 +13,7 @@ from tensorboardX import SummaryWriter
 import pickle
 import shutil
 import torch
+import numpy as np
 
 import models
 import utils.io_utils as io_utils
@@ -195,8 +196,40 @@ def main():
     cg_dict = ckpt["cg"] # get computation graph
     input_dim = cg_dict["feat"].shape[2] 
     num_classes = cg_dict["pred"].shape[2]
-    print("Loaded model from {}".format(prog_args.ckptdir))
-    print("input dim: ", input_dim, "; num classes: ", num_classes)
+    # print(f"Number of adjs: {len(cg_dict.get('adj'))}")
+    # print(f"Number of feats: {len(cg_dict.get('feat'))}")
+    # print(f"Number of labels: {len(cg_dict.get('label'))}")
+    
+    # The below code was used to find the number of pairs of identical graphs
+    # def cond(arr1, arr2, st="id"):
+    #     if st=="id":
+    #         return np.array_equal(arr1,arr2) == True
+    #     elif st=="sim":
+    #         a = (arr1 != arr2).sum()
+    #         return (a==int(0.01*arr1.shape[0]*arr1.shape[1]))
+    # indx=0
+    # gg = []
+    # for p in range(400):
+    #     flag= [0]*len(cg_dict.get('adj'))
+    #     for i in range(len(cg_dict.get('adj'))):
+    #         if (i != p) and cond(cg_dict.get('adj')[i], cg_dict.get('adj')[p],"sim"):
+    #             flag[i] = 1
+    #             gg.append((i,p))
+    #     if len([k for k in flag if k!=0]) > 0:
+    #         indx+=1
+    
+    # gg = [x for x in gg if x[0] < x[1]]
+    # print(f"CoooooooooooLLLLLLL: {len(gg)}")
+    # dis = []
+    # for m in gg:
+    #     if m[0] not in dis:
+    #         dis.append(m[0])
+    #     if m[1] not in dis:
+    #         dis.append(m[1])
+    # print(len(dis))
+    # print(len(gg))
+    # print("Loaded model from {}".format(prog_args.ckptdir))
+    # print("input dim: ", input_dim, "; num classes: ", num_classes)
 
     # Determine explainer mode
     graph_mode = (
