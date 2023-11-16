@@ -79,7 +79,7 @@ def create_filename(save_dir, args, isbest=False, num_epochs=-1):
     elif num_epochs > 0:
         filename = os.path.join(filename, str(num_epochs))
 
-    return filename + "test1.pth.tar"
+    return filename + ".pth.tar"
 
 
 def save_checkpoint(model, optimizer, args, num_epochs=-1, isbest=False, cg_dict=None):

@@ -357,41 +357,18 @@ class Explainer:
             print("===============================")
             print(f"Explaining graph #{graph_idx}")
             print("===============================")
+            
             masked_adj = self.explain(node_idx=0, graph_idx=graph_idx, graph_mode=True)
-            G_denoised = io_utils.denoise_graph(
-                masked_adj,
-                0,
-                threshold_num=20,
-                feat=self.feat[graph_idx],
-                max_component=False,
-            )
+            G_denoised = io_utils.denoise_graph(masked_adj, 0, threshold_num=20, feat=self.feat[graph_idx], max_component=False)
             label = self.label[graph_idx]
-            io_utils.log_graph(
-                self.writer,
-                G_denoised,
-                "graph/graphidx_{}_label={}".format(graph_idx, label),
-                identify_self=False,
-                nodecolor="feat",
-                args=self.args
-            )
+            
+            # Log the denoised mask
+            io_utils.log_graph(self.writer, G_denoised, "graph/graphidx_{}_label={}".format(graph_idx, label), identify_self=False, nodecolor="feat", args=self.args)
             masked_adjs.append(masked_adj)
 
-            G_orig = io_utils.denoise_graph(
-                self.adj[graph_idx],
-                0,
-                feat=self.feat[graph_idx],
-                threshold=None,
-                max_component=False,
-            )
-
-            io_utils.log_graph(
-                self.writer,
-                G_orig,
-                "graph/graphidx_{}".format(graph_idx),
-                identify_self=False,
-                nodecolor="feat",
-                args=self.args
-            )
+            # Log the denoised original graph
+            G_orig = io_utils.denoise_graph(self.adj[graph_idx], 0, feat=self.feat[graph_idx], threshold=None, max_component=False)
+            io_utils.log_graph(self.writer, G_orig, "graph/graphidx_{}".format(graph_idx), identify_self=False, nodecolor="feat", args=self.args)
 
         # plot cmap for graphs' node features
         io_utils.plot_cmap_tb(self.writer, "tab20", 20, "tab20_cmap")
@@ -884,10 +861,13 @@ class ExplainModule(nn.Module):
             # x_grad = torch.sum(x_grad[self.graph_idx], 0, keepdim=True).t()
         adj_grad = (adj_grad + adj_grad.t()) / 2
         adj_grad = (adj_grad * self.adj).squeeze()
+
+        mod_mask_name = "grad/adj_masked_" + self.args.dup_mode + "_"
+        mod_orig_name = "grad/adj_orig_" + self.args.dup_mode + "_"
         if log_adj:
-            io_utils.log_matrix(self.writer, adj_grad, "grad/adj_masked", epoch)
+            io_utils.log_matrix(self.writer, adj_grad, mod_mask_name, epoch)
             self.adj.requires_grad = False
-            io_utils.log_matrix(self.writer, self.adj.squeeze(), "grad/adj_orig", epoch)
+            io_utils.log_matrix(self.writer, self.adj.squeeze(), mod_orig_name, epoch)
 
         masked_adj = self.masked_adj[0].cpu().detach().numpy()
 
@@ -900,7 +880,7 @@ class ExplainModule(nn.Module):
             io_utils.log_graph(
                 self.writer,
                 G,
-                name="grad/graph_orig",
+                name=mod_orig_name,
                 epoch=epoch,
                 identify_self=False,
                 label_node_feat=True,
@@ -908,7 +888,10 @@ class ExplainModule(nn.Module):
                 edge_vmax=None,
                 args=self.args,
             )
-        io_utils.log_matrix(self.writer, x_grad, "grad/feat", epoch)
+
+        mod_feat_name = "grad/feat_" + self.args.dup_mode + "_"
+        mod_gr_name = "grad/graph_" + self.args.dup_mode + "_"
+        io_utils.log_matrix(self.writer, x_grad, mod_feat_name, epoch)
 
         adj_grad = adj_grad.detach().numpy()
         if self.graph_mode:
@@ -923,7 +906,7 @@ class ExplainModule(nn.Module):
             io_utils.log_graph(
                 self.writer,
                 G,
-                name="grad/graph",
+                name=mod_gr_name,
                 epoch=epoch,
                 identify_self=False,
                 label_node_feat=True,
@@ -935,7 +918,7 @@ class ExplainModule(nn.Module):
             # G = io_utils.denoise_graph(adj_grad, node_idx, label=label, threshold=0.5)
             G = io_utils.denoise_graph(adj_grad, node_idx, threshold_num=12)
             io_utils.log_graph(
-                self.writer, G, name="grad/graph", epoch=epoch, args=self.args
+                self.writer, G, name=mod_gr_name, epoch=epoch, args=self.args
             )
 
         # if graph attention, also visualize att
@@ -943,6 +926,7 @@ class ExplainModule(nn.Module):
     def log_masked_adj(self, node_idx, epoch, name="mask/graph", label=None):
         # use [0] to remove the batch dim
         masked_adj = self.masked_adj[0].cpu().detach().numpy()
+        mod_name = name+"_"+self.args.dup_mode + "_"
         if self.graph_mode:
             G = io_utils.denoise_graph(
                 masked_adj,
@@ -954,7 +938,7 @@ class ExplainModule(nn.Module):
             io_utils.log_graph(
                 self.writer,
                 G,
-                name=name,
+                name=mod_name,
                 identify_self=False,
                 nodecolor="feat",
                 epoch=epoch,

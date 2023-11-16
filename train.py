@@ -789,6 +789,10 @@ def pkl_task(args, feat=None):
         args=args
     )
 
+    # print(f"Train: {len(train_dataset)}")
+    # print(f"Val: {len(val_dataset)}")
+    # print(f"Test: {len(test_dataset)}")
+
     if args.gpu:
         model = model.cuda()
     train(train_dataset, model, args, test_dataset=test_dataset, val_dataset=val_dataset)

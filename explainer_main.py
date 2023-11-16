@@ -19,6 +19,7 @@ import models
 import utils.io_utils as io_utils
 import utils.parser_utils as parser_utils
 from explainer import explain
+import modify_dataset as md
 
 
 
@@ -140,6 +141,7 @@ def arg_parse():
         dest="explainer_suffix",
         help="suffix added to the explainer log",
     )
+    parser.add_argument("--dup-mode",dest="dup_mode",help="Whether the duplication is identical or similar for testing the consistency or continuity of explanations")
 
     # TODO: Check argument usage
     parser.set_defaults(
@@ -166,6 +168,7 @@ def arg_parse():
         mask_act="sigmoid",
         multigraph_class=-1,
         multinode_class=-1,
+        dup_mode="identical"
     )
     return parser.parse_args()
 
@@ -196,11 +199,15 @@ def main():
     cg_dict = ckpt["cg"] # get computation graph
     input_dim = cg_dict["feat"].shape[2] 
     num_classes = cg_dict["pred"].shape[2]
-    # print(f"Number of adjs: {len(cg_dict.get('adj'))}")
-    # print(f"Number of feats: {len(cg_dict.get('feat'))}")
-    # print(f"Number of labels: {len(cg_dict.get('label'))}")
-    
-    # The below code was used to find the number of pairs of identical graphs
+
+    # print(f"Fields: {cg_dict.keys()}")
+    # print(f"Number of adjs: {cg_dict.get('adj').shape}")
+    # print(f"Number of feats: {cg_dict.get('feat').shape}")
+    # print(f"Number of labels: {cg_dict.get('label').shape}")
+    # print(f"Number of preds: {cg_dict.get('pred').shape}")
+    # print(f"train_idx: {cg_dict.get('train_idx')}")
+
+    # # The below code was used to find the number of pairs of identical graphs
     # def cond(arr1, arr2, st="id"):
     #     if st=="id":
     #         return np.array_equal(arr1,arr2) == True
@@ -212,7 +219,7 @@ def main():
     # for p in range(400):
     #     flag= [0]*len(cg_dict.get('adj'))
     #     for i in range(len(cg_dict.get('adj'))):
-    #         if (i != p) and cond(cg_dict.get('adj')[i], cg_dict.get('adj')[p],"sim"):
+    #         if (i != p) and cond(cg_dict.get('adj')[i], cg_dict.get('adj')[p],"id"):
     #             flag[i] = 1
     #             gg.append((i,p))
     #     if len([k for k in flag if k!=0]) > 0:
@@ -228,8 +235,12 @@ def main():
     #         dis.append(m[1])
     # print(len(dis))
     # print(len(gg))
-    # print("Loaded model from {}".format(prog_args.ckptdir))
-    # print("input dim: ", input_dim, "; num classes: ", num_classes)
+
+    print("Loaded model from {}".format(prog_args.ckptdir))
+    print("input dim: ", input_dim, "; num classes: ", num_classes)
+
+    # Modify dataset for consistency and continuity check
+    cg_dict = md.modify(cg_dict, mode=prog_args.dup_mode)
 
     # Determine explainer mode
     graph_mode = (
@@ -312,7 +323,7 @@ def main():
         elif prog_args.graph_idx == -1:
             # just run for gr_ind which is a customized set of indices
             # gr_ind = [1,2,3,4]
-            gr_ind = [2*i for i in range(400,700,4)]
+            gr_ind = [i for i in range(0,300,4)]
             gr_ind.extend([x+1 for x in gr_ind])
             gr_ind.sort()
             explainer.explain_graphs(graph_indices=gr_ind)
@@ -346,9 +357,7 @@ def main():
 
         else:
             # explain a set of nodes
-            masked_adj = explainer.explain_nodes_gnn_stats(
-                range(400, 700, 5), prog_args
-            )
+            masked_adj = explainer.explain_nodes_gnn_stats(range(400, 700, 5), prog_args)
 
 if __name__ == "__main__":
     main()
