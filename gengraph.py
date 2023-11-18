@@ -86,7 +86,7 @@ def preprocess_input_graph(G, labels, normalize_adj=False):
         adj = np.matmul(np.matmul(sqrt_deg, adj), sqrt_deg)
 
     existing_node = list(G.nodes)[-1]
-    feat_dim = G.nodes[existing_node]["feat"].shape[0]
+    feat_dim = G.nodes[existing_node]['feat'].shape[0]
     f = np.zeros((G.number_of_nodes(), feat_dim), dtype=float)
     for i, u in enumerate(G.nodes()):
         f[i, :] = G.nodes[u]["feat"]

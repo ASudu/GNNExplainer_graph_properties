@@ -23,10 +23,13 @@ class ConstFeatureGen(FeatureGen):
         self.val = val
 
     def gen_node_features(self, G):
-        feat_dict = {i:{'feat': np.array(self.val, dtype=np.float32)} for i in G.nodes()}
+        arr = np.array(self.val, dtype=np.float32)
+        # arr = np.reshape(arr, (1,-1))        # important for Cora dataset
+        feat_dict = {i:{'feat': arr} for i in G.nodes()}
         print ('feat_dict[0]["feat"]:', feat_dict[0]['feat'].dtype)
-        nx.set_node_attributes(G, feat_dict)
-        print ('G.nodes[0]["feat"]:', G.nodes[0]['feat'].dtype)
+        nx.set_node_attributes(G, values=feat_dict)
+        node_num = list(G.nodes)[-1]
+        print ('G.nodes[0]["feat"]:', G.nodes[node_num]['feat'].dtype)
 
 
 class GaussianFeatureGen(FeatureGen):

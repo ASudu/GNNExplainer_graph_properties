@@ -754,6 +754,39 @@ def syn_task5(args, writer=None):
 
     train_node_classifier(G, labels, model, args, writer=writer)
 
+def general_node_task(args, writer=None):
+    # data
+    fpath = args.datadir + "\\" + args.dataset + ".pkl"
+    with open(fpath, "rb") as pkl_file:
+        G, labels = pickle.load(pkl_file)
+    
+    feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float))
+    feature_generator.gen_node_features(G)
+    
+    print("Number of nodes: ", G.number_of_nodes())
+    print("Number of edges: ", G.number_of_edges())
+    num_classes = len(list(set(labels)))
+    print("Number of classes: ", num_classes)
+
+    if args.method == "attn":
+        print("Method: attn")
+    else:
+        print("Method: base")
+        model = models.GcnEncoderNode(
+            args.input_dim,
+            args.hidden_dim,
+            args.output_dim,
+            num_classes,
+            args.num_gc_layers,
+            bn=args.bn,
+            args=args,
+        )
+
+        if args.gpu:
+            model = model.cuda()
+
+    train_node_classifier(G, labels, model, args, writer=writer)
+
 
 def pkl_task(args, feat=None):
     # dir = os.path.abspath(args.datadir)
@@ -1203,6 +1236,8 @@ def main():
             enron_task(prog_args, writer=writer)
         elif prog_args.dataset == "ppi_essential":
             ppi_essential_task(prog_args, writer=writer)
+        else:
+            general_node_task(prog_args,writer=writer)
 
     writer.close()
 
